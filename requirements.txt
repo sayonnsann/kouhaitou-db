@@ -1,0 +1,9 @@
+# 高配当株データベース 依存パッケージ
+yfinance>=0.2.40
+pandas>=2.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+xlrd>=2.0.1        # data_j.xls（旧xls形式）読み込みに必須
+openpyxl>=3.1.0    # 保険: JPXが将来 .xlsx に切り替えた場合に必要
+PyYAML>=6.0

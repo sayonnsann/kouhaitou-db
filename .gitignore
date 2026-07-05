@@ -1,0 +1,7 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# ローカル実行ログ（生成物CSVは追跡する: data/database.csv, data/dividends_cache.csv）
+data/build.log

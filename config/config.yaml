@@ -1,0 +1,30 @@
+# 高配当株データベース 設定ファイル
+# 各モジュール(build_database.py / irbank.py / prices.py / jpx.py / util.py)が参照する。
+
+# --- HTTP/スクレイピング関連 ---
+# 連絡先メールはプレースホルダ。実運用では自分の連絡先に置き換えること。
+user_agent: "kouhaitou-db/1.0 (+contact: your-email@example.com)"
+request_min_interval_seconds: 1.8   # IR BANK への最小リクエスト間隔（秒）
+request_timeout: 20                 # 1リクエストのタイムアウト（秒）
+retry_max: 3                        # リトライ最大回数（指数バックオフ）
+
+# --- 負荷分散(差分ローテーション) ---
+# 1回の実行でIR BANKを叩く「fetched_dateが古い順」の銘柄数。
+# 環境変数 DIVIDEND_BATCH_SIZE で上書き可能。
+dividend_batch_size: 200
+
+# --- 月次配当の割り付けロジック ---
+# month_basis: "payment"(既定=権利確定月+3ヶ月) / "record"(権利確定月そのもの)
+month_basis: "payment"
+# value_mode: "amount"(既定=各月に金額) / "flag"(支払月に1,それ以外0)
+value_mode: "amount"
+
+# --- yfinance 株価取得 ---
+yfinance_chunk_size: 250            # 1バッチあたりのティッカー数
+
+# --- 出力パス（リポジトリルートからの相対） ---
+output_database_path: "data/database.csv"
+output_cache_path: "data/dividends_cache.csv"
+
+# --- 優先銘柄リスト（毎回更新する保有/ウォッチ銘柄）---
+priority_codes_path: "config/priority_codes.txt"
