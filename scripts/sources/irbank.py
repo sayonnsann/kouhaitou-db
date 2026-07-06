@@ -165,24 +165,30 @@ def _parse_table(table, code, logger):
         logger.info("irbank: %s テーブルから対象行を抽出できず。スキップ", code)
         return None
 
-    # 予想行のうち最後のもの。無ければ最新行(=最後)にフォールバック。
-    forecast = [r for r in parsed if r[1]]
-    if forecast:
-        year_text, _, month, chukan, kimatsu, goukei = forecast[-1]
-    else:
-        year_text, _, month, chukan, kimatsu, goukei = parsed[-1]
-        logger.info("irbank: %s に予想行なし。最新行(%s)にフォールバック", code, year_text)
+    # 1行分の年間配当(合計。欠ける場合は中間+期末で補完)を返すヘルパ。有効値が無ければ None。
+    def _row_dividend(r):
+        _, _, _, ch, ki, go = r
+        d = go
+        if d is None or d <= 0:
+            parts = [v for v in (ch, ki) if v is not None and v > 0]
+            d = sum(parts) if parts else None
+        return d if (d is not None and d > 0) else None
 
-    # --- 年間配当(合計)の確定 ---
-    dividend = goukei
-    if dividend is None or dividend <= 0:
-        # 合計が "-" 等で欠ける場合は 中間+期末 で補完
-        parts = [v for v in (chukan, kimatsu) if v is not None and v > 0]
-        if parts:
-            dividend = sum(parts)
-    if dividend is None or dividend <= 0:
-        logger.info("irbank: %s 合計配当が取得できず(%s)。スキップ", code, year_text)
+    # 行を「新しい順」に見て、有効な配当額を持つ最初の行を採用する。
+    # parsed は古い→新しい順（末尾＝最新の予想行）なので、reversed で最新から探す。
+    # → 今期予想に値があればそれ、予想が「未定/空」なら直近の“実績”配当を採用する
+    #   （ユーザー要望: 予想が無いものは実績値を入れる）。全行無配なら None。
+    chosen = None
+    for r in reversed(parsed):
+        d = _row_dividend(r)
+        if d is not None:
+            chosen = (r, d)
+            break
+    if chosen is None:
+        logger.info("irbank: %s 有効な配当額なし(無配等)。スキップ", code)
         return None
+    (year_text, is_forecast, month, chukan, kimatsu, goukei), dividend = chosen
+    kubun_label = "予想" if is_forecast else "実績"
 
     # --- 回数の判定（中間・期末の有無で判定） ---
     has_chukan = chukan is not None and chukan > 0
@@ -199,8 +205,8 @@ def _parse_table(table, code, logger):
     record_months = _infer_record_months(month, count)
 
     logger.info(
-        "irbank: %s 予想=%s 合計=%s 中間=%s 期末=%s 決算月=%d 回数=%d 権利月=%s",
-        code, year_text, dividend, chukan, kimatsu, month, count, record_months,
+        "irbank: %s %s=%s 合計=%s 中間=%s 期末=%s 決算月=%d 回数=%d 権利月=%s",
+        code, kubun_label, year_text, dividend, chukan, kimatsu, month, count, record_months,
     )
     return {"dividend": dividend, "count": count, "record_months": record_months}
 
