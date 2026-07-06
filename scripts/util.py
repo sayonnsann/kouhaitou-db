@@ -56,8 +56,14 @@ def build_session(cfg):
 
 
 def jst_timestamp():
-    """現在時刻をJSTの文字列で返す（データベースS1セル=最終更新日時 用）。"""
-    return datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
+    """現在時刻(JST)を、Googleスプレッドシートが「日付値」として解釈できる形式で返す。
+    （データベースS1セル=最終更新日時 用）
+
+    重要: 管理シート側は IMPORTRANGE(...,"データベース!S1")+TIME(18,0,0) と
+    S1を日付として計算する。末尾に "JST" などの文字を付けると文字列になり
+    #VALUE! を引き起こすため、スラッシュ区切りの日時のみを返す（時刻はJST）。
+    """
+    return datetime.now(JST).strftime("%Y/%m/%d %H:%M:%S")
 
 
 def _payment_months_from_record(record_months, month_basis):
