@@ -1,13 +1,16 @@
 # 役割: 本プロジェクトのオーケストレーション（統括処理）。
 #   1. config ロード
-#   2. JPX から内国株ユニバース取得
+#   2. JPX から ユニバース取得（内国株式 + ETF・ETN + REIT等）
 #   3. yfinance で全銘柄の株価取得
-#   4. 差分ローテーション + 優先銘柄 で IR BANK 取得対象を選定
-#   5. IR BANK から配当取得 → キャッシュ更新
+#   4. 差分ローテーション + 優先銘柄 で配当取得対象を選定
+#   5. instrument 種別で配当取得を振り分け:
+#        - stock : IR BANK（従来どおり、挙動を変えない）
+#        - etf/reit : yfinance_div（分配金を yfinance から取得）
+#      → キャッシュ更新
 #   6. 全ユニバースについて 19列(A〜S)の行を構築
-#      （配当=キャッシュ、株価=prices、月次=util.build_monthly）
+#      （配当=キャッシュ、株価=prices、月次=stockはutil.build_monthly / ETF・REITは実支払月）
 #   7. data/database.csv を出力（UTF-8 BOMなし, ヘッダS1=最終更新日時）
-#   8. data/dividends_cache.csv を出力
+#   8. data/dividends_cache.csv を出力（新列 monthly / source を後方互換で追加）
 #
 # 堅牢性: 各ステージを try/except で包み、一部失敗でも取得済みデータでCSVを出す。
 
@@ -20,7 +23,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import util
-from sources import irbank, jpx, prices
+from sources import irbank, jpx, prices, yfinance_div
 
 # リポジトリルート（このファイル=scripts/build_database.py の1つ上）
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,7 +50,10 @@ HEADER_A_TO_R = [
     "12月",         # R
 ]
 
-CACHE_HEADER = ["code", "dividend", "count", "record_months", "fetched_date"]
+# キャッシュのカラム。後方互換のため末尾に monthly / source を追加。
+#   monthly: G〜R(12値)をセミコロン区切り。ETF/REIT の実支払月・実額。空なら未設定。
+#   source : "irbank"(内国株式) | "yfinance"(ETF/REIT)
+CACHE_HEADER = ["code", "dividend", "count", "record_months", "fetched_date", "monthly", "source"]
 
 
 def _abspath(rel):
@@ -74,8 +80,30 @@ def load_priority_codes(cfg, logger):
     return codes
 
 
+def _parse_monthly(raw):
+    """セミコロン区切りの monthly 文字列を長さ12のfloatリストにする。無効なら None。"""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    parts = raw.split(";")
+    if len(parts) != 12:
+        return None
+    months = []
+    for p in parts:
+        p = p.strip()
+        try:
+            months.append(float(p) if p else 0.0)
+        except ValueError:
+            months.append(0.0)
+    return months
+
+
 def load_cache(cfg, logger):
-    """dividends_cache.csv を読み、dict{code: {dividend,count,record_months(list),fetched_date}} を返す。"""
+    """dividends_cache.csv を読み、dict{code: {dividend,count,record_months,fetched_date,monthly,source}} を返す。
+
+    新列 monthly / source は旧CSVには無いため get で欠損許容（後方互換）。
+    monthly は 12値あればリスト、無ければ None。
+    """
     path = _abspath(cfg.get("output_cache_path", "data/dividends_cache.csv"))
     cache = {}
     if not os.path.exists(path):
@@ -100,6 +128,9 @@ def load_cache(cfg, logger):
                     "count": row.get("count") or "",
                     "record_months": record_months,
                     "fetched_date": (row.get("fetched_date") or "").strip(),
+                    # 新列（旧CSVには無いので get で欠損許容）
+                    "monthly": _parse_monthly(row.get("monthly")),
+                    "source": (row.get("source") or "").strip(),
                 }
     except Exception as e:  # noqa: BLE001
         logger.warning("cache: 読み込み失敗(%s)。空キャッシュから開始", e)
@@ -147,14 +178,24 @@ def select_rotation_targets(universe, cache, batch_size, priority_codes, logger)
 
 
 def update_cache(cache, fresh, logger):
-    """新規取得結果 fresh を cache にマージし、fetched_date を更新する。"""
+    """新規取得結果 fresh を cache にマージし、fetched_date を更新する。
+
+    fresh の各 info は次のいずれかの形:
+      - IR BANK  : {dividend, count, record_months}                （source="irbank"）
+      - yfinance : {dividend, count, months12, source="yfinance"}  （ETF/REIT, 実支払月）
+    月別(monthly)は yfinance のときだけ months12(長さ12) を保持する。
+    """
     today = util.datetime.now(util.JST).strftime("%Y-%m-%d")
     for code, info in fresh.items():
+        months12 = info.get("months12")
+        monthly = list(months12) if (months12 and len(months12) == 12) else None
         cache[code] = {
             "dividend": info.get("dividend", ""),
             "count": info.get("count", ""),
             "record_months": info.get("record_months", []) or [],
             "fetched_date": today,
+            "monthly": monthly,
+            "source": info.get("source", "irbank"),
         }
     logger.info("cache: %d 件を更新（fetched_date=%s）", len(fresh), today)
     return cache
@@ -170,6 +211,10 @@ def write_cache(cache, cfg, logger):
         for code in sorted(cache.keys()):
             entry = cache[code]
             rec = ";".join(str(m) for m in entry.get("record_months", []) or [])
+            monthly = entry.get("monthly")
+            monthly_str = ""
+            if monthly and len(monthly) == 12:
+                monthly_str = ";".join(_fmt_num(m) if m else "0" for m in monthly)
             writer.writerow(
                 [
                     code,
@@ -177,6 +222,8 @@ def write_cache(cache, cfg, logger):
                     entry.get("count", ""),
                     rec,
                     entry.get("fetched_date", ""),
+                    monthly_str,
+                    entry.get("source", ""),
                 ]
             )
     logger.info("cache: %s に %d 件を書き出し", path, len(cache))
@@ -212,19 +259,26 @@ def build_rows(universe, price_map, cache, cfg, logger):
         annual = ""
         count = ""
         record_months = []
+        cached_monthly = None
         if entry:
             annual = entry.get("dividend", "")
             count = entry.get("count", "")
             record_months = entry.get("record_months", []) or []
+            cached_monthly = entry.get("monthly")
 
-        # 月次配当(G〜R)を構築
-        monthly = util.build_monthly(
-            annual if annual != "" else 0,
-            count if count != "" else 0,
-            record_months,
-            month_basis=month_basis,
-            value_mode=value_mode,
-        )
+        # 月次配当(G〜R)を構築。
+        #   ETF/REIT: キャッシュに monthly(12値=実支払月・実額) があればそれをそのまま使う。
+        #   stock   : 従来どおり util.build_monthly で年間配当を割り付ける。
+        if cached_monthly and len(cached_monthly) == 12:
+            monthly = cached_monthly
+        else:
+            monthly = util.build_monthly(
+                annual if annual != "" else 0,
+                count if count != "" else 0,
+                record_months,
+                month_basis=month_basis,
+                value_mode=value_mode,
+            )
 
         # 株価(S列)
         price = price_map.get(code, "")
@@ -307,7 +361,8 @@ def main(argv=None):
     if not universe and cache:
         logger.warning("JPX失敗のため、キャッシュ内コードで暫定ユニバースを構築")
         universe = [
-            {"code": c, "name": "", "market": "", "sector33": ""}
+            {"code": c, "name": "", "market": "", "sector33": "",
+             "instrument": cache[c].get("source") == "yfinance" and "etf" or "stock"}
             for c in cache.keys()
         ]
 
@@ -333,13 +388,36 @@ def main(argv=None):
     except (TypeError, ValueError):
         batch_size = int(cfg.get("dividend_batch_size", 200))
 
+    # instrument 種別を引くためのマップ（未指定は "stock" 扱いで従来挙動を維持）
+    instrument_map = {s["code"]: s.get("instrument", "stock") for s in universe}
+
     try:
         priority_codes = load_priority_codes(cfg, logger)
         targets = select_rotation_targets(universe, cache, batch_size, priority_codes, logger)
-        # --- IR BANK 配当取得 ---
-        fresh = irbank.fetch_dividends(session, targets, cfg, logger)
+
+        # instrument でIR BANK対象(stock)とyfinance対象(etf/reit)に振り分け
+        stock_targets = [c for c in targets if instrument_map.get(c, "stock") == "stock"]
+        yf_targets = [c for c in targets if instrument_map.get(c, "stock") in ("etf", "reit")]
+
+        # --- 内国株式: IR BANK（従来どおり、挙動を変えない） ---
+        try:
+            stock_fresh = irbank.fetch_dividends(session, stock_targets, cfg, logger)
+            for code, info in stock_fresh.items():
+                info.setdefault("source", "irbank")
+                fresh[code] = info
+        except Exception as e:  # noqa: BLE001
+            logger.error("IR BANK 取得ステージで失敗(%s)。キャッシュのみで続行", e)
+
+        # --- ETF/REIT: yfinance_div（分配金を yfinance から取得） ---
+        try:
+            yf_fresh = yfinance_div.fetch_dividends(yf_targets, cfg, logger)
+            for code, info in yf_fresh.items():
+                info.setdefault("source", "yfinance")
+                fresh[code] = info
+        except Exception as e:  # noqa: BLE001
+            logger.error("yfinance 分配金取得ステージで失敗(%s)。キャッシュのみで続行", e)
     except Exception as e:  # noqa: BLE001
-        logger.error("IR BANK 取得ステージで失敗(%s)。キャッシュのみで続行", e)
+        logger.error("配当取得対象の選定で失敗(%s)。キャッシュのみで続行", e)
         fresh = {}
 
     # --- キャッシュ更新 ---

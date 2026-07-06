@@ -22,6 +22,11 @@ value_mode: "amount"
 # --- yfinance 株価取得 ---
 yfinance_chunk_size: 250            # 1バッチあたりのティッカー数
 
+# --- yfinance 分配金取得（ETF・REIT用）---
+# yfinance_div.fetch_dividends の1銘柄ごとの最小呼び出し間隔（秒）。
+# yfinance のレート制限対策。0にすると無待機。
+yfinance_div_min_interval_seconds: 0.4
+
 # --- 出力パス（リポジトリルートからの相対） ---
 output_database_path: "data/database.csv"
 output_cache_path: "data/dividends_cache.csv"

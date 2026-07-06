@@ -1,6 +1,10 @@
 # 役割: JPX(日本取引所)の東証上場銘柄一覧 data_j.xls をダウンロード・解析し、
-#       内国株式(普通株)のみに絞った銘柄ユニバースを返す。
-# 出力: list[dict] {code, name, market(市場・商品区分), sector33(33業種区分)}
+#       内国株式(普通株) + ETF・ETN + REIT等 に絞った銘柄ユニバースを返す。
+#       （PRO Market・外国株式・出資証券は含めない）
+# 出力: list[dict] {code, name, market(市場・商品区分), sector33(33業種区分), instrument}
+#   instrument: "stock"|"etf"|"reit"（市場・商品区分から判定）
+#   sector33: 内国株式は33業種名。ETF は "ETF"、REIT は "REIT" の識別ラベルを入れる
+#             （33業種区分が "-" のETF/REITを、管理シートの業種列/業種ソートで判別可能にする）。
 
 import io
 import re
@@ -51,10 +55,30 @@ def _download_xls(session, logger):
     return resp.content
 
 
-def get_universe(session, logger):
-    """内国株式のみのユニバースを list[dict] で返す。
+# 市場・商品区分 → instrument 種別の判定。
+# ETF・ETN は "etf"、REIT・ベンチャーファンド・カントリーファンド・インフラファンドは "reit"。
+def _classify_instrument(market):
+    """市場・商品区分の文字列から instrument("stock"|"etf"|"reit") を返す。対象外は None。"""
+    if "内国株式" in market:
+        return "stock"
+    if "ETF" in market or "ETN" in market:
+        return "etf"
+    # REIT・ベンチャーファンド・カントリーファンド・インフラファンド 一括を reit 扱い
+    if "REIT" in market or "ファンド" in market:
+        return "reit"
+    return None
 
-    dict のキー: code, name, market, sector33
+
+# instrument → sector33(業種ラベル) の既定値（ETF/REITは33業種が "-" のため識別ラベルを入れる）。
+_INSTRUMENT_SECTOR_LABEL = {"etf": "ETF", "reit": "REIT"}
+
+
+def get_universe(session, logger):
+    """内国株式 + ETF・ETN + REIT等 のユニバースを list[dict] で返す。
+
+    dict のキー: code, name, market, sector33, instrument
+      - instrument: "stock"|"etf"|"reit"
+      - sector33  : 内国株式は33業種名、ETFは "ETF"、REITは "REIT"
     失敗時は例外を送出（呼び出し側で捕捉し、部分的成功でCSVを出す想定）。
     """
     content = _download_xls(session, logger)
@@ -76,29 +100,50 @@ def get_universe(session, logger):
                 % (col, list(df.columns))
             )
 
-    # 内国株式のみ残す（ETF/ETN/REIT/優先出資証券/外国株/PRO Marketを除外）。
-    # 市場・商品区分に "内国株式" を含む行のみを採用。
-    mask = df[col_market].fillna("").str.contains("内国株式")
+    # 内国株式 + ETF・ETN + REIT等 を残す（PRO Market/外国株式/出資証券は除外）。
+    # instrument 判定が None(=対象外) の行は落とす。
+    market_series = df[col_market].fillna("")
+    mask = market_series.apply(lambda m: _classify_instrument(m) is not None)
     df = df[mask].copy()
 
     universe = []
+    n_stock = n_etf = n_reit = 0
     for _, row in df.iterrows():
         code = (row.get(col_code) or "").strip()
         if not code:
             continue
         name = (row.get(col_name) or "").strip()
         market = (row.get(col_market) or "").strip()
-        sector33 = ""
-        if col_sector33 in df.columns:
-            sector33 = (row.get(col_sector33) or "").strip()
+        instrument = _classify_instrument(market)
+        if instrument is None:
+            continue
+
+        if instrument == "stock":
+            # 内国株式は従来どおり33業種名を使う
+            sector33 = ""
+            if col_sector33 in df.columns:
+                sector33 = (row.get(col_sector33) or "").strip()
+            n_stock += 1
+        else:
+            # ETF/REITは33業種が "-" なので識別ラベルを入れる
+            sector33 = _INSTRUMENT_SECTOR_LABEL.get(instrument, "")
+            if instrument == "etf":
+                n_etf += 1
+            else:
+                n_reit += 1
+
         universe.append(
             {
                 "code": code,
                 "name": name,
                 "market": market,
                 "sector33": sector33,
+                "instrument": instrument,
             }
         )
 
-    logger.info("JPX: 内国株式ユニバース %d 銘柄を取得", len(universe))
+    logger.info(
+        "JPX: ユニバース %d 銘柄を取得（内国株式 %d / ETF %d / REIT %d）",
+        len(universe), n_stock, n_etf, n_reit,
+    )
     return universe
