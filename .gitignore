@@ -4,4 +4,7 @@ __pycache__/
 *.pyc
 
 # ローカル実行ログ（生成物CSVは追跡する: data/database.csv, data/dividends_cache.csv）
-data/build.log
+data/*.log
+
+# 優先銘柄（保有・ウォッチ）リストは公開しない。CIはSecrets PRIORITY_CODESを使う
+config/priority_codes.txt

@@ -47,6 +47,8 @@ jobs:
       - name: Build database
         env:
           DIVIDEND_BATCH_SIZE: ${{ env.DIVIDEND_BATCH_SIZE }}
+          # 優先銘柄（保有・ウォッチ銘柄）は公開リポジトリに載せず Secrets で渡す
+          PRIORITY_CODES: ${{ secrets.PRIORITY_CODES }}
         run: python scripts/build_database.py
 
       - name: Commit and push if changed

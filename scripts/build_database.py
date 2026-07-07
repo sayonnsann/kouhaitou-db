@@ -61,7 +61,16 @@ def _abspath(rel):
 
 
 def load_priority_codes(cfg, logger):
-    """priority_codes.txt を読み、コード文字列のリストを返す。"""
+    """優先銘柄コードのリストを返す。
+
+    環境変数 PRIORITY_CODES（カンマ/空白区切り）があればそれを優先する。
+    保有銘柄を公開リポジトリに載せないため、CI では GitHub Secrets 経由の
+    環境変数で渡し、priority_codes.txt はローカル実行用（git管理外）とする。
+    """
+    env_codes = os.environ.get("PRIORITY_CODES", "").replace(",", " ").split()
+    if env_codes:
+        logger.info("priority: 環境変数 PRIORITY_CODES から %d 件", len(env_codes))
+        return env_codes
     path = _abspath(cfg.get("priority_codes_path", "config/priority_codes.txt"))
     codes = []
     if not os.path.exists(path):
