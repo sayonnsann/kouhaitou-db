@@ -69,8 +69,12 @@ def _classify_instrument(market):
     return None
 
 
-# instrument → sector33(業種ラベル) の既定値（ETF/REITは33業種が "-" のため識別ラベルを入れる）。
-_INSTRUMENT_SECTOR_LABEL = {"etf": "ETF", "reit": "REIT"}
+# instrument → sector33(業種ラベル) の既定値。
+# 管理シート(テンプレ)は投信類の業種カテゴリとして「ETF・他」を持ち、業種割合や
+# 景気感応度の集計もこの値を前提にしている。テンプレに存在しない "ETF"/"REIT" を入れると
+# 業種→景気感応度のvlookupが不整合を起こし、景気感応度グラフが壊れる(#ルートノードエラー)。
+# そのため国内ETF・REITはいずれもテンプレ準拠の「ETF・他」に統一する。
+_INSTRUMENT_SECTOR_LABEL = {"etf": "ETF・他", "reit": "ETF・他"}
 
 
 def get_universe(session, logger):
