@@ -1,0 +1,81 @@
+# 高配当株データベース 日次更新ワークフロー
+# 毎日 JST 早朝に build_database.py を実行し、
+# data/database.csv と data/etf_dividends_cache.csv をコミットする。
+#
+# 内国株式の配当は、自前のEDINET配信リポジトリ（pharmacistlife-dividend-data）を
+# 2つ目のリポジトリとしてチェックアウトし、ローカルファイルとして読む。
+# 3,800銘柄ぶんのHTTP取得が無くなるので、実行時間は従来より大幅に短い。
+#
+# 【ディレクトリ構成の前提】
+#   リポジトリ直下＝プロジェクトルート（scripts/ や data/ が直下）の構成。
+#   jsDelivr URL は ".../@main/data/database.csv"（サブディレクトリなし）。
+#   別リポジトリの kouhaitou-db/ サブディレクトリに置く場合は
+#   env.PROJECT_DIR を "kouhaitou-db" に、URL に "/kouhaitou-db" を足す。
+name: update-database
+
+on:
+  schedule:
+    # UTC 21:00 = JST 06:00（早朝）
+    - cron: "0 21 * * *"
+  workflow_dispatch: {}   # 手動実行も許可
+
+permissions:
+  contents: write
+
+env:
+  # プロジェクトのルート（リポジトリ直下に置くなら "." にする）
+  PROJECT_DIR: "."
+  # ETF・REIT の分配金を yfinance に問い合わせる1回あたりの件数。
+  # 空にすると config.yaml の既定値が使われる。
+  DIVIDEND_BATCH_SIZE: "200"
+  # EDINET配信データのチェックアウト先（リポジトリ直下からの相対）
+  FEED_DIR: "edinet-feed/edinet"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.PROJECT_DIR }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 内国株式の配当ソース（自前のEDINET配信データ）。
+      # 3,800個のJSONをHTTPで1つずつ取りに行かず、まとめてチェックアウトして読む。
+      - name: Checkout dividend feed
+        uses: actions/checkout@v4
+        with:
+          repository: sayonnsann/pharmacistlife-dividend-data
+          path: edinet-feed
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build database
+        env:
+          DIVIDEND_BATCH_SIZE: ${{ env.DIVIDEND_BATCH_SIZE }}
+          EDINET_FEED_DIR: ${{ env.FEED_DIR }}
+          # 優先銘柄（保有・ウォッチ銘柄）は公開リポジトリに載せず Secrets で渡す
+          PRIORITY_CODES: ${{ secrets.PRIORITY_CODES }}
+        run: python scripts/build_database.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/database.csv data/etf_dividends_cache.csv
+          # 変更が無ければコミットせず正常終了（ワークフローを失敗させない）
+          if git diff --cached --quiet; then
+            echo "変更なし。コミットをスキップします。"
+          else
+            git commit -m "data: 日次更新 [skip ci]"
+            git push
+          fi

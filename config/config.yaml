@@ -1,0 +1,41 @@
+# 高配当株データベース 設定ファイル
+# 各モジュール(build_database.py / edinet_feed.py / prices.py / jpx.py / util.py)が参照する。
+
+# --- HTTP 関連 ---
+user_agent: "kouhaitou-db/1.0 (+contact: ennpatushakugannnoutite@yahoo.co.jp)"
+request_timeout: 20                 # 1リクエストのタイムアウト（秒）
+retry_max: 3                        # リトライ最大回数（指数バックオフ）
+
+# --- 内国株式の配当（自前のEDINET配信データ）---
+# {4桁コード}.json が並ぶディレクトリ。GitHub Actions では配信リポジトリを
+# 2つ目にチェックアウトしたパスを環境変数 EDINET_FEED_DIR で渡す。
+# 未設定でディレクトリも無い場合は jsDelivr から1銘柄ずつ取りに行く（動作確認用）。
+edinet_feed_dir: ""
+
+# --- 負荷分散(差分ローテーション) ※ETF・REITのyfinance取得のみ ---
+# 1回の実行で yfinance に分配金を問い合わせる「fetched_dateが古い順」の銘柄数。
+# 内国株式の配当はローカル読みなのでローテーション対象外（毎日全銘柄更新）。
+# 環境変数 DIVIDEND_BATCH_SIZE で上書き可能。
+dividend_batch_size: 200
+
+# --- 月次配当の割り付けロジック ---
+# month_basis: "payment"(既定=権利確定月+3ヶ月) / "record"(権利確定月そのもの)
+month_basis: "payment"
+# value_mode: "amount"(既定=各月に金額) / "flag"(支払月に1,それ以外0)
+value_mode: "amount"
+
+# --- yfinance 株価取得 ---
+yfinance_chunk_size: 250            # 1バッチあたりのティッカー数
+
+# --- yfinance 分配金取得（ETF・REIT用）---
+# yfinance_div.fetch_dividends の1銘柄ごとの最小呼び出し間隔（秒）。
+# yfinance のレート制限対策。0にすると無待機。
+yfinance_div_min_interval_seconds: 0.4
+
+# --- 出力パス（リポジトリルートからの相対） ---
+output_database_path: "data/database.csv"
+output_cache_path: "data/etf_dividends_cache.csv"
+
+# --- 優先銘柄リスト（毎回更新する保有/ウォッチ銘柄）---
+# 内国株式は毎日全銘柄が更新されるため、ここが効くのは ETF・REIT のみ。
+priority_codes_path: "config/priority_codes.txt"
