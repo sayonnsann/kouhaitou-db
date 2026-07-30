@@ -1,0 +1,19 @@
+{
+  "adjustments": [
+    {
+      "active": true,
+      "applied_date": "2026-07-30",
+      "code": "8309",
+      "execution_date": "2026-07-30",
+      "feed_dividend_before": 185.0,
+      "ratio": 4.0
+    }
+  ],
+  "feed_snapshots": {
+    "8309": {
+      "dividend": 185.0,
+      "observed_date": "2026-07-30"
+    }
+  },
+  "version": 1
+}

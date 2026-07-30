@@ -2,15 +2,16 @@
 #   1. config ロード
 #   2. JPX から ユニバース取得（内国株式 + ETF・ETN + REIT等）
 #   3. yfinance で全銘柄の株価取得
-#   4. instrument 種別で配当取得を振り分け:
+#   4. 急激な株価変動だけsplit eventを照会し、EDINET配当を機械調整
+#   5. instrument 種別で配当取得を振り分け:
 #        - stock    : 自前のEDINET配信データ（sources/edinet_feed.py）を毎回まとめて読む
 #                     ローカルファイル読みなので全銘柄を毎日更新できる（ローテ不要）
 #        - etf/reit : yfinance_div（分配金を yfinance から取得）
 #                     こちらは外部APIなので、従来どおり差分ローテーション + キャッシュ
-#   5. 全ユニバースについて 19列(A〜S)の行を構築
+#   6. 全ユニバースについて 19列(A〜S)の行を構築
 #      （株価=prices、月次=stockはutil.build_monthly / ETF・REITは実支払月）
-#   6. data/database.csv を出力（UTF-8 BOMなし, ヘッダS1=最終更新日時）
-#   7. data/etf_dividends_cache.csv を出力（ETF・REITの分配金キャッシュ）
+#   7. data/database.csv を出力（UTF-8 BOMなし, ヘッダS1=最終更新日時）
+#   8. data/etf_dividends_cache.csv と split_adjustments.json を出力
 #
 # 堅牢性: 各ステージを try/except で包み、一部失敗でも取得済みデータでCSVを出す。
 
@@ -23,7 +24,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import util
-from sources import edinet_feed, jpx, prices, yfinance_div
+from sources import edinet_feed, jpx, prices, split_adjustments, yfinance_div
 
 # リポジトリルート（このファイル=scripts/build_database.py の1つ上）
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -252,6 +253,38 @@ def _fmt_num(x):
     return ("%f" % f).rstrip("0").rstrip(".")
 
 
+def load_previous_prices(cfg, logger):
+    """前回database.csvのS列と生成日を読む。
+
+    Yahooが分割前の履歴を遡及修正すると直近2営業日の比から急落が消えるため、
+    日次ビルドで実際に前回保存したS列も分割候補判定の基準に使う。
+    """
+    path = _abspath(cfg.get("output_database_path", "data/database.csv"))
+    result = {}
+    observed_date = None
+    if not os.path.exists(path):
+        return result, observed_date
+    try:
+        with open(path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.reader(f)
+            header = next(reader, [])
+            if len(header) >= 19:
+                timestamp = header[18].strip()
+                observed_date = timestamp.split(" ", 1)[0].replace("/", "-")
+            for row in reader:
+                if len(row) < 19 or not row[0].strip():
+                    continue
+                try:
+                    result[row[0].strip()] = float(row[18])
+                except (TypeError, ValueError):
+                    continue
+    except (OSError, csv.Error) as e:
+        logger.warning("prices: 前回database.csvの株価を読めません(%s)", e)
+        return {}, None
+    logger.info("prices: 前回database.csvから %d 件の比較株価を読み込み", len(result))
+    return result, observed_date
+
+
 def build_rows(universe, price_map, stock_div, etf_cache, cfg, logger):
     """全ユニバースについて 19列(A〜S) の行リストを構築して返す。
 
@@ -394,11 +427,20 @@ def main(argv=None):
 
     # --- 株価（全銘柄, 毎回フル取得） ---
     price_map = {}
+    price_changes = {}
     try:
-        price_map = prices.get_prices(universe_codes, cfg, logger)
+        previous_prices, previous_price_date = load_previous_prices(cfg, logger)
+        price_map, price_changes = prices.get_prices_with_changes(
+            universe_codes,
+            cfg,
+            logger,
+            previous_prices=previous_prices,
+            previous_date=previous_price_date,
+        )
     except Exception as e:  # noqa: BLE001
         logger.error("株価取得に失敗(%s)。株価は空欄で続行", e)
         price_map = {}
+        price_changes = {}
 
     # instrument 種別を引くためのマップ（未指定は "stock" 扱い）
     instrument_map = {s["code"]: s.get("instrument", "stock") for s in universe}
@@ -406,14 +448,52 @@ def main(argv=None):
     # --- 内国株式の配当: 自前のEDINET配信データを毎回まとめて読む ---
     # ローカルファイル読みなので外部負荷が無く、全銘柄を毎日更新できる。
     stock_div = {}
+    stock_codes = [
+        c for c in universe_codes if instrument_map.get(c, "stock") == "stock"
+    ]
     try:
-        stock_codes = [c for c in universe_codes if instrument_map.get(c, "stock") == "stock"]
         stock_div = edinet_feed.fetch_dividends(
             stock_codes, cfg, logger, feed_dir=args.feed_dir, session=session
         )
     except Exception as e:  # noqa: BLE001
         logger.error("EDINET配信データの読み込みに失敗(%s)。配当は空欄で続行", e)
         stock_div = {}
+
+    # --- 株式分割・併合の検証とEDINET配当の機械調整 ---
+    # 株価の一括取得で見つけた急変銘柄のうち、内国株式だけをイベント照合する。
+    # 不整合を通常の取得失敗のように握りつぶすと過大/過小配当を公開するため、
+    # この工程だけは標準エラーへ理由を出して例外終了し、Actionsを失敗させる。
+    split_state_path = _abspath(
+        cfg.get("split_adjustments_path", "data/split_adjustments.json")
+    )
+    try:
+        split_state = split_adjustments.load_state(split_state_path)
+        stock_code_set = set(stock_codes)
+        stock_price_changes = {
+            code: change
+            for code, change in price_changes.items()
+            if code in stock_code_set
+        }
+        today = util.datetime.now(util.JST).strftime("%Y-%m-%d")
+        split_state = split_adjustments.detect_and_record(
+            stock_price_changes,
+            stock_div,
+            split_state,
+            cfg,
+            logger,
+            applied_date=today,
+        )
+        stock_div, split_state = split_adjustments.apply_to_dividends(
+            stock_div,
+            split_state,
+            cfg,
+            logger,
+            observed_date=today,
+        )
+        split_adjustments.save_state(split_state_path, split_state)
+    except split_adjustments.SplitAdjustmentError as e:
+        print(f"FATAL: 株式分割調整に失敗: {e}", file=sys.stderr)
+        raise
 
     # --- ETF・REITの分配金: yfinance（差分ローテ + 優先銘柄） ---
     fresh = {}

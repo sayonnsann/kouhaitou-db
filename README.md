@@ -6,7 +6,7 @@
 
 - 銘柄ユニバース・銘柄名・業種：**JPX公式「東証上場銘柄一覧」（data_j.xls）**
 - 株価：**yfinance**（`{code}.T`）
-- 配当（年間配当・回数・権利確定月）：**自前のEDINET配信データ**（金融庁EDINETの有価証券報告書由来／株式分割・併合を調整済み／再配布自由）
+- 配当（年間配当・回数・権利確定月）：**自前のEDINET配信データ**（金融庁EDINETの有価証券報告書由来／分割反映の遅延は本パイプラインで補正／再配布自由）
 
 生成した `database.csv` を GitHub 経由で **jsDelivr** に載せ、Googleスプレッドシート側は `IMPORTDATA` で読み込むだけ。管理シートは **`集計!P2` セルのIDを差し替えるだけ**で動きます。
 
@@ -116,14 +116,30 @@ ETF・REITの分配金だけは yfinance を叩くため、従来どおり `divi
 | `dividend_batch_size` | 1回に yfinance へ分配金を問い合わせる「最も古いN銘柄」（ETF・REITのみ） | 200（環境変数 `DIVIDEND_BATCH_SIZE` で上書き可） |
 | `month_basis` | `payment`（支払月＝権利確定+約3ヶ月・既定）／`record`（権利確定月ベース） | payment |
 | `value_mode` | `amount`（金額・既定）／`flag`（1/0） | amount |
+| `split_candidate_min_price_ratio` / `split_candidate_max_price_ratio` | split eventを個別照会する前営業日比の範囲外閾値 | 2/3 / 1.5 |
+| `split_price_validation_tolerance` | event比率と実株価変動の整合許容差 | 0.20 |
+| `split_feed_transition_tolerance` | feed側が係数を反映したとみなす許容差 | 0.15 |
 
 **優先銘柄**は `config/priority_codes.txt` に1行1コードで記載（保有・監視銘柄）。内国株式は毎回すべて更新されるため、この指定が効くのは ETF・REIT だけです。
+
+### 株式分割・併合の自動調整
+
+株価の一括取得で前営業日比が急変した内国株式だけ、yfinance の
+`Stock Splits` event を追加照会します。event 比率と実際の株価変動が整合した
+場合に限り、EDINET由来の年間配当と月別配当を同じ比率で調整します。
+照合不能・不整合はデータを出力せずビルドを失敗させます。
+急変判定には直近履歴に加え、Yahooによる過去値の遡及修正に備えて前回
+`database.csv` に保存したS列も使います。
+
+検証済み係数は `data/split_adjustments.json` に永続化されます。EDINET feed は
+毎日元値から再取得されるため active な係数を毎回適用し、feed の生値自体が
+係数ぶん変化した時点で feed 側調整済みと判定して係数を無効化します。
 
 ---
 
 ## GitHub Actions（自動運用）
 
-`.github/workflows/update.yml` が毎日1回（既定：UTC 21:00 = **JST 6:00**）cronで実行され、`data/database.csv` と `data/etf_dividends_cache.csv` を自動コミットします。
+`.github/workflows/update.yml` が毎日1回（既定：UTC 21:00 = **JST 6:00**）cronで実行され、`data/database.csv`、`data/etf_dividends_cache.csv`、`data/split_adjustments.json` を自動コミットします。
 
 - ワークフローには **`permissions: contents: write`** が必要（data/ の自動コミットのため）。
   リポジトリ設定 → Actions → General → Workflow permissions を **Read and write permissions** にしておくこと。
@@ -218,7 +234,7 @@ ETF・REITの分配金だけは yfinance を叩くため、従来どおり `divi
 
 ## 配当データの中身（自前EDINET配信データ）
 
-配当は公開リポジトリ [`sayonnsann/pharmacistlife-dividend-data`](https://github.com/sayonnsann/pharmacistlife-dividend-data) の `edinet/{4桁コード}.json` から読みます。金融庁EDINETの有価証券報告書をパースしたもので、**株式分割・併合を最新の株数基準に揃え済み**です。
+配当は公開リポジトリ [`sayonnsann/pharmacistlife-dividend-data`](https://github.com/sayonnsann/pharmacistlife-dividend-data) の `edinet/{4桁コード}.json` から読みます。金融庁EDINETの有価証券報告書をパースしたものです。feed側の株式分割・併合反映が遅れる期間は、本パイプラインが検証済み係数で現在の株数基準に揃えます。
 
 このDBが使うキーは3つだけです。
 

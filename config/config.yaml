@@ -26,6 +26,13 @@ value_mode: "amount"
 
 # --- yfinance 株価取得 ---
 yfinance_chunk_size: 250            # 1バッチあたりのティッカー数
+# 既存の一括株価レスポンスから split event 個別照会へ回す急変の閾値。
+split_candidate_min_price_ratio: 0.6666667
+split_candidate_max_price_ratio: 1.5
+# event比率で株価変動を戻した値と1.0の許容差（通常の値動きを20%まで許容）。
+split_price_validation_tolerance: 0.20
+# feed生値が既存係数を反映したと判定する相対許容差。
+split_feed_transition_tolerance: 0.15
 
 # --- yfinance 分配金取得（ETF・REIT用）---
 # yfinance_div.fetch_dividends の1銘柄ごとの最小呼び出し間隔（秒）。
@@ -35,6 +42,7 @@ yfinance_div_min_interval_seconds: 0.4
 # --- 出力パス（リポジトリルートからの相対） ---
 output_database_path: "data/database.csv"
 output_cache_path: "data/etf_dividends_cache.csv"
+split_adjustments_path: "data/split_adjustments.json"
 
 # --- 優先銘柄リスト（毎回更新する保有/ウォッチ銘柄）---
 # 内国株式は毎日全銘柄が更新されるため、ここが効くのは ETF・REIT のみ。
