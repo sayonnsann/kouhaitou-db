@@ -7,11 +7,90 @@
       "execution_date": "2026-07-30",
       "feed_dividend_before": 185.0,
       "ratio": 4.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-07-30",
+      "code": "2163",
+      "execution_date": "2026-07-30",
+      "feed_dividend_before": 84.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-07-30",
+      "code": "2961",
+      "execution_date": "2026-07-30",
+      "feed_dividend_before": 150.0,
+      "ratio": 4.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-07-30",
+      "code": "3193",
+      "execution_date": "2026-07-30",
+      "feed_dividend_before": 46.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-07-30",
+      "code": "4380",
+      "execution_date": "2026-07-30",
+      "feed_dividend_before": 25.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-07-30",
+      "code": "6863",
+      "execution_date": "2026-07-30",
+      "feed_dividend_before": 89.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-07-30",
+      "code": "7678",
+      "execution_date": "2026-07-30",
+      "feed_dividend_before": 15.0,
+      "ratio": 2.0
     }
   ],
   "feed_snapshots": {
+    "2163": {
+      "dividend": 84.0,
+      "feed_year": "2026",
+      "observed_date": "2026-07-30"
+    },
+    "2961": {
+      "dividend": 150.0,
+      "feed_year": "2025",
+      "observed_date": "2026-07-30"
+    },
+    "3193": {
+      "dividend": 46.0,
+      "feed_year": "2025",
+      "observed_date": "2026-07-30"
+    },
+    "4380": {
+      "dividend": 25.0,
+      "feed_year": "2026",
+      "observed_date": "2026-07-30"
+    },
+    "6863": {
+      "dividend": 89.0,
+      "feed_year": "2026",
+      "observed_date": "2026-07-30"
+    },
+    "7678": {
+      "dividend": 15.0,
+      "feed_year": "2020",
+      "observed_date": "2026-07-30"
+    },
     "8309": {
       "dividend": 185.0,
+      "feed_year": "2026",
       "observed_date": "2026-07-30"
     }
   },
