@@ -215,9 +215,17 @@ def detect_and_record(
             raise SplitAdjustmentError(f"{code}: split event の取得に失敗: {exc}") from exc
 
         matching = [event for event in events if event.get("execution_date") == latest_date]
-        if len(matching) != 1:
+        if len(matching) == 0:
+            # イベントが無い＝分割ではない（ストップ高・TOB等の正当な急変動）。
+            # 調整は行わず、記録だけ残して続行する。
+            logger.warning(
+                "splits: %s %s は急変動だが分割イベントなし（正当な値動きとみなし調整しない）",
+                code, latest_date,
+            )
+            continue
+        if len(matching) > 1:
             raise SplitAdjustmentError(
-                f"{code}: 急激な株価変動に対応する split event を一意に確認できません "
+                f"{code}: 同日に複数の split event があり比率を特定できません "
                 f"(date={latest_date}, events={events})"
             )
         event = matching[0]
