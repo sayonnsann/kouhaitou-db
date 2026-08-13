@@ -136,6 +136,43 @@ class UpdatePricesOnlyTest(unittest.TestCase):
         self.assertEqual(meta["session"], "afternoon_close")
         self.assertEqual(meta["session_label"], "後場引け")
 
+    def test_afternoon_close_without_todays_close_leaves_csv_and_meta_untouched(self):
+        """土日祝など、当日(JST)分の終値がまだ無い状態でafternoon_closeを実行した場合。
+
+        yfinanceが返すのは前営業日(金曜)の終値のみで、当日分が無い。
+        morning_openと同じく「当日分が無い銘柄は前回値保持」の対象になり、
+        全銘柄が当日分無しなら1件も取得できなかった扱いとなり、CSV/metaは
+        一切書き換えられずexit code 0で終了する（無意味な更新・コミット・
+        jsDelivr purgeを防ぐための全滅パス）。
+        """
+        previous_business_day = (datetime.now(JST).date() - timedelta(days=2)).isoformat()
+        index = pd.to_datetime([previous_business_day])
+        data = pd.DataFrame(
+            {
+                ("Close", "1301.T"): [4650.0],
+                ("Close", "1305.T"): [4310.0],
+                ("Close", "9999.T"): [995.0],
+            },
+            index=index,
+        )
+        data.columns = pd.MultiIndex.from_tuples(data.columns)
+
+        class FakeYF:
+            @staticmethod
+            def download(*a, **kw):
+                return data
+
+        prices.yf = FakeYF()
+        with open(self.db_path, encoding="utf-8") as f:
+            before = f.read()
+
+        upo.main(["--session", "afternoon_close"])  # 例外を投げず終了すること
+
+        with open(self.db_path, encoding="utf-8") as f:
+            after = f.read()
+        self.assertEqual(before, after)
+        self.assertFalse(os.path.exists(self.meta_path))
+
     def test_total_failure_leaves_csv_and_meta_untouched(self):
         class FakeYF:
             @staticmethod

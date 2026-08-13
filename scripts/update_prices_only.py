@@ -15,7 +15,8 @@
 #     2. A列(銘柄コード)ごとに yfinance で株価を取得する
 #          morning_open   : 当日(JST)の始値のみ採用。当日分がまだ無い銘柄
 #                           （薄商い・未寄り付き・取得失敗）は前回値を保持する
-#          afternoon_close: 直近の有効な終値を採用（従来のフルビルドと同じ）
+#          afternoon_close: 当日(JST)の終値のみ採用。当日分がまだ無い銘柄
+#                           （土日祝の実行・取得失敗等）は前回値を保持する
 #     3. 取得できた銘柄だけS列(19列目)を差し替える。B〜R列（銘柄名・業種・
 #        配当データ等）は一切変更しない
 #     4. ヘッダS1（最終更新日時）を実行時刻(JST)に更新する
@@ -59,7 +60,7 @@ SESSION_DEFS = {
     },
     "afternoon_close": {
         "yf_field": "Close",
-        "require_today": False,
+        "require_today": True,
         "label": "後場引け",
     },
 }
