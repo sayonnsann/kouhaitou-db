@@ -43,6 +43,9 @@ yfinance_div_min_interval_seconds: 0.4
 output_database_path: "data/database.csv"
 output_cache_path: "data/etf_dividends_cache.csv"
 split_adjustments_path: "data/split_adjustments.json"
+# scripts/update_prices_only.py が書き出す補助ファイル（19列CSVの契約は変えず、
+# 「前場寄付/後場引け」どちらの株価かを配信先が判別するための情報）
+price_update_meta_path: "data/price_update_meta.json"
 
 # --- 優先銘柄リスト（毎回更新する保有/ウォッチ銘柄）---
 # 内国株式は毎日全銘柄が更新されるため、ここが効くのは ETF・REIT のみ。
