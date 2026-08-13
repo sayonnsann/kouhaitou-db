@@ -1,0 +1,112 @@
+# 高配当株データベース 株価のみ更新ワークフロー（1日2回）
+#
+# 毎朝6:00(JST)の update.yml（フルビルド: JPXユニバース・EDINET配当・
+# ETF/REIT分配金ローテーションを含む）とは完全に別の軽量ワークフロー。
+# こちらは scripts/update_prices_only.py を使い、既存 data/database.csv の
+# S列（株価）とヘッダの最終更新日時だけを差し替える。
+# 東証の市場セッションに合わせて1日2回動く:
+#   - 前場寄付（morning_open）: 当日9:00の始値。cronはJST 9:05頃を狙う
+#   - 後場引け（afternoon_close）: 当日の終値。cronはJST 15:30頃を狙う
+#
+# fetch_forecasts.py（配当予想・edinetdb.jp API、1日100リクエストの無料枠）は
+# 呼び出さない。呼ぶのは update.yml 側の日次フルビルドだけなので、
+# このワークフローを1日複数回動かしても枠を消費しない。
+
+name: update-prices-only
+
+on:
+  schedule:
+    # UTC 0:05 = JST 09:05（前場寄付直後）
+    - cron: "5 0 * * *"
+    # UTC 6:30 = JST 15:30（後場引け後）
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+    inputs:
+      session:
+        description: "セッション: morning_open か afternoon_close（空欄ならcronの時刻から自動判定）"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  # プロジェクトのルート（リポジトリ直下に置くなら "." にする。update.yml と同じ流儀）
+  PROJECT_DIR: "."
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.PROJECT_DIR }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Determine session
+        id: session
+        run: |
+          if [ -n "${{ github.event.inputs.session }}" ]; then
+            SESSION="${{ github.event.inputs.session }}"
+          elif [ "${{ github.event.schedule }}" = "5 0 * * *" ]; then
+            SESSION="morning_open"
+          elif [ "${{ github.event.schedule }}" = "30 6 * * *" ]; then
+            SESSION="afternoon_close"
+          else
+            # 手動実行でセッション未指定の場合のフォールバック（現在時刻UTCで判定）
+            HOUR_UTC=$(date -u +%H)
+            if [ "$HOUR_UTC" -lt 3 ]; then
+              SESSION="morning_open"
+            else
+              SESSION="afternoon_close"
+            fi
+          fi
+          echo "session=$SESSION" >> "$GITHUB_OUTPUT"
+          echo "判定結果: session=$SESSION"
+
+      - name: Update prices only
+        run: python scripts/update_prices_only.py --session "${{ steps.session.outputs.session }}"
+
+      - name: Commit and push if changed
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/database.csv
+          # price_update_meta.json は「株価を1件も取得できなかった」回は書き出されない。
+          # 初回実行など、まだ一度も成功していない場合はファイル自体が無いことがあるため、
+          # 存在確認してからaddする（無い状態で `git add` すると git がエラー終了するため）。
+          if [ -f data/price_update_meta.json ]; then
+            git add data/price_update_meta.json
+          fi
+          # 変更が無ければコミットせず正常終了（ワークフローを失敗させない）
+          if git diff --cached --quiet; then
+            echo "変更なし。コミットをスキップします。"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "data: 株価のみ更新 (${{ steps.session.outputs.session }}) [skip ci]"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # jsDelivrは @main 指定だと最大12時間キャッシュされる。日中2回の即時反映には
+      # purge URLを叩く必要がある（README「jsDelivrのキャッシュについて」参照）。
+      - name: Purge jsDelivr cache
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          curl -fsS "https://purge.jsdelivr.net/gh/sayonnsann/kouhaitou-db@main/data/database.csv" \
+            || echo "database.csv のpurgeに失敗しました（非致命的。最大12時間で自然反映されます）"
+          curl -fsS "https://purge.jsdelivr.net/gh/sayonnsann/kouhaitou-db@main/data/price_update_meta.json" \
+            || echo "price_update_meta.json のpurgeに失敗しました（非致命的）"

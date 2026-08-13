@@ -4,6 +4,10 @@
 # 出力:
 #   get_prices: dict code(str) -> price(float)
 #   get_prices_with_changes: 上記に加え、分割候補となる急変銘柄の直近2終値
+#   get_field_prices: 株価だけを日中複数回更新するモード用。Open/Close を選べ、
+#                      Open採用時は「当日分がまだ無い」銘柄を結果から除外できる
+
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 
@@ -12,20 +16,31 @@ try:
 except Exception:  # noqa: BLE001
     yf = None
 
+# JST(UTC+9)。util.py と同じ定義をここでも持つ（sources/ 配下は util に依存しない設計のため）
+JST = timezone(timedelta(hours=9))
+
 
 def _extract_close_series(data, ticker):
     """yf.download の結果から、指定ティッカーの有効な終値系列を取り出す。"""
+    return _extract_field_series(data, ticker, "Close")
+
+
+def _extract_field_series(data, ticker, field):
+    """yf.download の結果から、指定ティッカー・指定フィールドの有効な系列を取り出す。
+
+    field: "Close" または "Open" など yf.download が返す列名。
+    """
     try:
         # 複数ティッカー時は列が MultiIndex (field, ticker) になる
         if isinstance(data.columns, pd.MultiIndex):
-            if ("Close", ticker) not in data.columns:
+            if (field, ticker) not in data.columns:
                 return None
-            series = data[("Close", ticker)].dropna()
+            series = data[(field, ticker)].dropna()
         else:
             # 単一ティッカー時は通常のカラム
-            if "Close" not in data.columns:
+            if field not in data.columns:
                 return None
-            series = data["Close"].dropna()
+            series = data[field].dropna()
         if series.empty:
             return None
         return series
@@ -160,4 +175,76 @@ def get_prices(codes, cfg, logger):
     キーを含めない（呼び出し側で空欄扱い）。
     """
     result, _ = get_prices_with_changes(codes, cfg, logger)
+    return result
+
+
+def get_field_prices(codes, cfg, logger, field="Close", require_today=False):
+    """codes(list[str]) の指定フィールド最新値を dict{code: price} で返す。
+
+    株価のみ更新モード（前場開始直後=Open採用 / 大引け後=Close採用）用。
+    - field="Open": 寄り付き値を採用したいとき。require_today=True と組み合わせ、
+      当日(JST)分がまだ無い銘柄（薄商いで寄っていない等）は結果に含めない
+      （呼び出し側で「前回値を保持」する設計を想定）。
+    - field="Close": 従来の get_prices と同様、直近の有効な終値を採用する
+      （日付が当日か前営業日かは問わない）。
+    - yfinance が使えない/失敗した銘柄は結果に含めない（フル取得失敗として扱う）。
+    """
+    result = {}
+    if yf is None:
+        logger.warning("prices: yfinance が import できませんでした。株価はスキップします")
+        return result
+
+    chunk_size = int(cfg.get("yfinance_chunk_size", 250))
+    codes = [str(c).strip() for c in codes if str(c).strip()]
+    today_str = datetime.now(JST).date().isoformat()
+
+    for i in range(0, len(codes), chunk_size):
+        chunk = codes[i : i + chunk_size]
+        tickers = [f"{c}.T" for c in chunk]
+        try:
+            # 直近数日分を取得し、最新の有効値を採用（休場日・データ遅延対策で period="5d"）。
+            data = yf.download(
+                tickers,
+                period="5d",
+                interval="1d",
+                threads=True,
+                progress=False,
+                group_by="column",
+                auto_adjust=False,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                "prices: バッチ %d-%d の取得に失敗(%s)。スキップします（前回値を保持）",
+                i,
+                i + len(chunk),
+                e,
+            )
+            continue
+
+        if data is None or len(data) == 0:
+            logger.warning("prices: バッチ %d-%d は空データでした", i, i + len(chunk))
+            continue
+
+        skipped_not_today = 0
+        for code, ticker in zip(chunk, tickers):
+            series = _extract_field_series(data, ticker, field)
+            if series is None:
+                continue
+            latest_date = _index_date(series.index[-1])
+            if require_today and latest_date != today_str:
+                # まだ当日分の値が付いていない（未寄り付き等）→前回値保持のため除外
+                skipped_not_today += 1
+                continue
+            result[code] = float(series.iloc[-1])
+
+        logger.info(
+            "prices: バッチ %d-%d 完了（field=%s, 累計 %d 件取得, 当日未反映 %d 件）",
+            i,
+            i + len(chunk),
+            field,
+            len(result),
+            skipped_not_today,
+        )
+
+    logger.info("prices: 株価(%s) %d / %d 銘柄を取得", field, len(result), len(codes))
     return result
