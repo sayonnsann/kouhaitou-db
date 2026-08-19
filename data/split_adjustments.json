@@ -61,37 +61,37 @@
     "2163": {
       "dividend": 84.0,
       "feed_year": "2026",
-      "observed_date": "2026-08-19"
+      "observed_date": "2026-08-20"
     },
     "2961": {
       "dividend": 150.0,
       "feed_year": "2025",
-      "observed_date": "2026-08-19"
+      "observed_date": "2026-08-20"
     },
     "3193": {
       "dividend": 46.0,
       "feed_year": "2025",
-      "observed_date": "2026-08-19"
+      "observed_date": "2026-08-20"
     },
     "4380": {
       "dividend": 25.0,
       "feed_year": "2026",
-      "observed_date": "2026-08-19"
+      "observed_date": "2026-08-20"
     },
     "6863": {
       "dividend": 89.0,
       "feed_year": "2026",
-      "observed_date": "2026-08-19"
+      "observed_date": "2026-08-20"
     },
     "7678": {
       "dividend": 15.0,
       "feed_year": "2020",
-      "observed_date": "2026-08-19"
+      "observed_date": "2026-08-20"
     },
     "8309": {
       "dividend": 185.0,
       "feed_year": "2026",
-      "observed_date": "2026-08-19"
+      "observed_date": "2026-08-20"
     }
   },
   "version": 1
