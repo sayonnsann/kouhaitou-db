@@ -1,4 +1,4 @@
-# 役割: JPX(日本取引所)の東証上場銘柄一覧 data_j.xls をダウンロード・解析し、
+# 役割: JPX(日本取引所)の東証上場銘柄一覧 data_j.xlsx(2026-09 に xls から変更)をダウンロード・解析し、
 #       内国株式(普通株) + ETF・ETN + REIT等 に絞った銘柄ユニバースを返す。
 #       （PRO Market・外国株式・出資証券は含めない）
 # 出力: list[dict] {code, name, market(市場・商品区分), sector33(33業種区分), instrument}
@@ -12,10 +12,10 @@ from urllib.parse import urljoin
 
 import pandas as pd
 
-# 既知の直リンク（ブラウザUAで200 OK確認済み）。まずこれを試す。
+# 既知の直リンク（2026-09-05 に .xls → .xlsx へ変更されたのを確認）。まずこれを試す。
 JPX_XLS_URL = (
     "https://www.jpx.co.jp/markets/statistics-equities/misc/"
-    "tvdivq0000001vg2-att/data_j.xls"
+    "tvdivq0000001vg2-att/data_j.xlsx"
 )
 # 直リンクが失効した場合に辿るインデックスページ。
 JPX_INDEX_URL = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
@@ -26,10 +26,10 @@ def _discover_xls_url(session, logger):
     resp = session.get(JPX_INDEX_URL, timeout=30)
     resp.raise_for_status()
     html = resp.text
-    # href="....data_j.xls" を正規表現で拾う
-    m = re.search(r'href="([^"]*data_j\.xls)"', html)
+    # href="....data_j.xlsx"（旧 .xls も許容）を正規表現で拾う
+    m = re.search(r'href="([^"]*data_j\.xlsx?)"', html)
     if not m:
-        raise RuntimeError("インデックスページから data_j.xls のリンクが見つかりません")
+        raise RuntimeError("インデックスページから data_j.xlsx/xls のリンクが見つかりません")
     rel = m.group(1)
     abs_url = urljoin(JPX_INDEX_URL, rel)
     logger.info("JPX: インデックスから解決したURL: %s", abs_url)
@@ -87,7 +87,7 @@ def get_universe(session, logger):
     """
     content = _download_xls(session, logger)
 
-    # data_j.xls は xlrd で読める旧xls形式。コードは文字列として扱う。
+    # data_j.xlsx は openpyxl、旧 data_j.xls は xlrd で読む（pandas が内容から自動判別）。コードは文字列として扱う。
     df = pd.read_excel(io.BytesIO(content), dtype=str)
 
     # 想定カラム: 日付, コード, 銘柄名, 市場・商品区分, 33業種コード, 33業種区分, ...
