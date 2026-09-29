@@ -95,68 +95,734 @@
       "execution_date": "2026-08-28",
       "feed_dividend_before": 22.0,
       "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "1718",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 350.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "1815",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 170.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "1904",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 179.0,
+      "ratio": 4.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "1925",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 175.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "1926",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 145.0,
+      "ratio": 4.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "1965",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 170.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "2108",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 160.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "2282",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 160.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "2469",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 85.0,
+      "ratio": 2.0
+    },
+    {
+      "active": false,
+      "applied_date": "2026-09-29",
+      "code": "278A",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": null,
+      "ratio": 2.0
+    },
+    {
+      "active": false,
+      "applied_date": "2026-09-29",
+      "code": "285A",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": null,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "3099",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 70.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "3106",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 307.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "3932",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 115.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "4062",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 22.5,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "4374",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 28.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "4471",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 170.0,
+      "ratio": 4.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "4667",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 37.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "4746",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 173.0,
+      "ratio": 4.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "4762",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 47.5,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "5232",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 120.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "5334",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 205.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "5706",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 245.0,
+      "ratio": 10.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "5805",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 223.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "6135",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 270.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "6368",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 200.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "6379",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 117.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "6622",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 180.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "6627",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 110.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "7242",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 156.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "7282",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 138.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "7433",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 200.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "7716",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 54.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "7911",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 58.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "7988",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 110.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8035",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 628.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8084",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 138.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8174",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 103.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8316",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 157.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8343",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 175.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8360",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 131.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8361",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 150.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8370",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 137.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8388",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 142.5,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8551",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 184.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "8766",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 218.0,
+      "ratio": 15.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "9065",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 246.0,
+      "ratio": 5.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "9068",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 210.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "9074",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 140.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "9687",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 181.0,
+      "ratio": 3.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "9956",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 74.0,
+      "ratio": 2.0
+    },
+    {
+      "active": true,
+      "applied_date": "2026-09-29",
+      "code": "9987",
+      "execution_date": "2026-09-29",
+      "feed_dividend_before": 100.0,
+      "ratio": 2.0
     }
   ],
   "feed_snapshots": {
+    "1718": {
+      "dividend": 350.0,
+      "feed_year": "2025",
+      "observed_date": "2026-09-29"
+    },
+    "1815": {
+      "dividend": 170.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "1904": {
+      "dividend": 179.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "1925": {
+      "dividend": 175.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "1926": {
+      "dividend": 145.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "1965": {
+      "dividend": 170.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "2108": {
+      "dividend": 160.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
     "2163": {
       "dividend": 84.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "2282": {
+      "dividend": 160.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "2469": {
+      "dividend": 85.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     },
     "2961": {
       "dividend": 150.0,
       "feed_year": "2025",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "3099": {
+      "dividend": 70.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "3106": {
+      "dividend": 307.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     },
     "3193": {
       "dividend": 46.0,
       "feed_year": "2025",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "3932": {
+      "dividend": 115.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "4062": {
+      "dividend": 22.5,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "4374": {
+      "dividend": 28.0,
+      "feed_year": "2025",
+      "observed_date": "2026-09-29"
     },
     "4380": {
       "dividend": 25.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "4471": {
+      "dividend": 170.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "4667": {
+      "dividend": 37.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "4746": {
+      "dividend": 173.0,
+      "feed_year": "2025",
+      "observed_date": "2026-09-29"
+    },
+    "4762": {
+      "dividend": 47.5,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "5232": {
+      "dividend": 120.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "5334": {
+      "dividend": 205.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "5706": {
+      "dividend": 245.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "5805": {
+      "dividend": 223.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "6135": {
+      "dividend": 270.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "6368": {
+      "dividend": 200.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "6379": {
+      "dividend": 117.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "6622": {
+      "dividend": 180.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "6627": {
+      "dividend": 110.0,
+      "feed_year": "2025",
+      "observed_date": "2026-09-29"
     },
     "6834": {
       "dividend": 100.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
     },
     "6863": {
       "dividend": 89.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "7242": {
+      "dividend": 156.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "7282": {
+      "dividend": 138.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "7433": {
+      "dividend": 200.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     },
     "7649": {
       "dividend": 35.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
     },
     "7678": {
       "dividend": 15.0,
       "feed_year": "2020",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "7716": {
+      "dividend": 54.0,
+      "feed_year": "2025",
+      "observed_date": "2026-09-29"
+    },
+    "7911": {
+      "dividend": 58.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "7988": {
+      "dividend": 110.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     },
     "8011": {
       "dividend": 139.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "8035": {
+      "dividend": 628.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8084": {
+      "dividend": 138.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8174": {
+      "dividend": 103.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     },
     "8309": {
       "dividend": 185.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "8316": {
+      "dividend": 157.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8343": {
+      "dividend": 175.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8360": {
+      "dividend": 131.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8361": {
+      "dividend": 150.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8370": {
+      "dividend": 137.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8388": {
+      "dividend": 142.5,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8551": {
+      "dividend": 184.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "8766": {
+      "dividend": 218.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "9065": {
+      "dividend": 246.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "9068": {
+      "dividend": 210.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "9074": {
+      "dividend": 140.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     },
     "9279": {
       "dividend": 22.0,
       "feed_year": "2025",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "9687": {
+      "dividend": 181.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     },
     "9900": {
       "dividend": 12.0,
       "feed_year": "2026",
-      "observed_date": "2026-09-28"
+      "observed_date": "2026-09-29"
+    },
+    "9956": {
+      "dividend": 74.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
+    },
+    "9987": {
+      "dividend": 100.0,
+      "feed_year": "2026",
+      "observed_date": "2026-09-29"
     }
   },
   "version": 1
