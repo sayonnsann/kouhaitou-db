@@ -1,8 +1,8 @@
 {
-  "session": "afternoon_close",
-  "session_label": "後場引け",
-  "as_of_date": "2026-10-01",
-  "updated_at": "2026/10/01 22:47:22",
-  "updated_count": 4140,
+  "session": "morning_open",
+  "session_label": "前場寄付",
+  "as_of_date": "2026-10-02",
+  "updated_at": "2026/10/02 14:23:48",
+  "updated_count": 4099,
   "total_count": 4247
 }
